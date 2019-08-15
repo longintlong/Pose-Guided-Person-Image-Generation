@@ -95,7 +95,7 @@ def _get_image_file_list(dataset_dir, split_name):
 
     # Remove non-jpg files
     valid_filelist = []
-    for i in xrange(0, len(filelist)):
+    for i in range(0, len(filelist)):
         if filelist[i].endswith('.jpg') or filelist[i].endswith('.png'):
             valid_filelist.append(filelist[i])
 
@@ -137,17 +137,17 @@ def _get_train_all_pn_pairs(dataset_dir, out_dir, split_name='train', augment_ra
         n_pairs = []
         # pdb.set_trace()
         if 'test_seq'==split_name:
-            for i in xrange(0, len(filelist)):
-                for j in xrange(0, len(filelist)):
+            for i in range(0, len(filelist)):
+                for j in range(0, len(filelist)):
                     p_pairs.append([filelist[i],filelist[j]])
                     if len(p_pairs)%100000==0:
                             print(len(p_pairs))
 
         elif 'same_diff_cam'==mode:
-            for i in xrange(0, len(filelist)):
+            for i in range(0, len(filelist)):
                 names = filelist[i].split('_')
                 id_i = names[0]
-                for j in xrange(i+1, len(filelist)):
+                for j in range(i+1, len(filelist)):
                     names = filelist[j].split('_')
                     id_j = names[0]
                     if id_j == id_i:
@@ -229,7 +229,7 @@ def _getPoseMask(peaks, height, width, radius=4, var=4, mode='Solid'):
             distance = np.sqrt((r0-r1)**2 + (c0-c1)**2)
             sampleN = int(distance/radius)
             if sampleN>1:
-                for i in xrange(1,sampleN):
+                for i in range(1,sampleN):
                     r = r0 + (r1-r0)*i/sampleN
                     c = c0 + (c1-c0)*i/sampleN
                     ind, val = _getSparseKeypoint(r, c, 0, height, width, radius, var, mode)
@@ -323,7 +323,7 @@ def _get_valid_peaks(all_peaks, subsets):
                 peaks.append(valid_p)
                 # if subsets[valid_idx][i] > -1:
                 #   kk = 0
-                #   for j in xrange(valid_idx):
+                #   for j in range(valid_idx):
                 #     if subsets[j][i] > -1:
                 #       kk += 1
                 #   peaks.append(all_peaks[i][kk])

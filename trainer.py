@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import os, pdb
-import StringIO
+# import StringIO
 import scipy.misc
 import numpy as np
 import glob
@@ -319,7 +319,7 @@ class PG2(object):
                     disc_ITERS = 1
                 else:
                     disc_ITERS = self.wgan_gp.CRITIC_ITERS
-                for i in xrange(disc_ITERS):
+                for i in range(disc_ITERS):
                     self.sess.run(self.d_optim)
                     if self.wgan_gp.MODE == 'wgan':
                         self.sess.run(self.clip_disc_weights)
@@ -377,7 +377,7 @@ class PG2(object):
         if not os.path.exists(test_result_dir_mask_target):
             os.makedirs(test_result_dir_mask_target)
 
-        for i in xrange(400):
+        for i in range(400):
             x_fixed, x_target_fixed, pose_fixed, pose_target_fixed, mask_fixed, mask_target_fixed = self.get_image_from_loader()
             x = utils_wgan.process_image(x_fixed, 127.5, 127.5)
             x_target = utils_wgan.process_image(x_target_fixed, 127.5, 127.5)
@@ -387,7 +387,7 @@ class PG2(object):
                 x_fake = self.generate(x, x_target, pose_target_fixed, test_result_dir, idx=self.start_step, save=False)
             p = (np.amax(pose_fixed, axis=-1, keepdims=False)+1.0)*127.5
             pt = (np.amax(pose_target_fixed, axis=-1, keepdims=False)+1.0)*127.5
-            for j in xrange(self.batch_size):
+            for j in range(self.batch_size):
                 idx = i*self.batch_size+j
                 im = Image.fromarray(x_fixed[j,:].astype(np.uint8))
                 im.save('%s/%05d.png'%(test_result_dir_x, idx))
@@ -415,7 +415,7 @@ class PG2(object):
         G = self.sess.run(self.G, {self.x: x_fixed, self.pose_target: pose_target_fixed})
         ssim_G_x_list = []
         # x_0_255 = utils_wgan.unprocess_image(x_target_fixed, 127.5, 127.5)
-        for i in xrange(G.shape[0]):
+        for i in range(G.shape[0]):
             # G_gray = rgb2gray((G[i,:]/127.5-1).clip(min=-1,max=1))
             # x_target_gray = rgb2gray((x_target_fixed[i,:]).clip(min=-1,max=1))
             G_gray = rgb2gray((G[i,:]).clip(min=0,max=255).astype(np.uint8))

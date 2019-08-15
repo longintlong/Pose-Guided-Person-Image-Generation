@@ -112,7 +112,7 @@ class WGAN_GP(object):
 
         self.CRITIC_ITERS = 5 # How many iterations to train the critic for
         self.N_GPUS = 1 # Number of GPUs
-        self.DEVICES = ['/gpu:{}'.format(i) for i in xrange(self.N_GPUS)]
+        self.DEVICES = ['/gpu:{}'.format(i) for i in range(self.N_GPUS)]
 
         lib.print_model_settings(locals().copy())
 

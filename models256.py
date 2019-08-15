@@ -34,7 +34,7 @@ def GeneratorCNN_Pose_UAEAfterResidual_256(x, pose_target, input_channel, z_num,
             z = tf.concat([z, noise], 1)
 
         # Decoder
-        x = slim.fully_connected(z, np.prod([min_fea_map_H, min_fea_map_H, hidden_num]), activation_fn=None)
+        x = slim.fully_connected(z, int(np.prod([min_fea_map_H, min_fea_map_H, hidden_num])), activation_fn=None)
         x = reshape(x, min_fea_map_H, min_fea_map_H, hidden_num, data_format)
         
         for idx in range(repeat_num):

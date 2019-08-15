@@ -123,7 +123,7 @@ def _getPoseMask(peaks, height, width, radius=4, var=4, mode='Solid'):
             sampleN = int(distance/radius)
             # sampleN = 0
             if sampleN>1:
-                for i in xrange(1,sampleN):
+                for i in range(1,sampleN):
                     r = r0 + (r1-r0)*i/sampleN
                     c = c0 + (c1-c0)*i/sampleN
                     ind, val = _getSparseKeypoint(r, c, 0, height, width, radius, var, mode)

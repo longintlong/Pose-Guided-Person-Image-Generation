@@ -129,7 +129,7 @@ def get_split(split_name, dataset_dir, data_name='DeepFashion', file_pattern=Non
 
   print('load pn_pairs_num ......')
   fpath = os.path.join(dataset_dir, 'pn_pairs_num_'+split_name+'.p')
-  with open(fpath,'r') as f:
+  with open(fpath,'rb') as f:
     pn_pairs_num = pickle.load(f)
 
   return slim.dataset.Dataset(
