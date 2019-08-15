@@ -126,9 +126,9 @@ def _get_train_all_pn_pairs(dataset_dir, out_dir, split_name='train', augment_ra
         p_pairs_path = os.path.join(out_dir, 'p_pairs_'+split_name.split('_')[0]+'.p')
         n_pairs_path = os.path.join(out_dir, 'n_pairs_'+split_name.split('_')[0]+'.p')
     if os.path.exists(p_pairs_path):
-        with open(p_pairs_path,'r') as f:
+        with open(p_pairs_path,'rb') as f:
             p_pairs = pickle.load(f)
-        with open(n_pairs_path,'r') as f:
+        with open(n_pairs_path,'rb') as f:
             n_pairs = pickle.load(f)
     else:
         filelist = _get_image_file_list(dataset_dir, split_name)
@@ -168,9 +168,9 @@ def _get_train_all_pn_pairs(dataset_dir, out_dir, split_name='train', augment_ra
         print('p_pairs length:%d' % len(p_pairs))
         print('n_pairs length:%d' % len(n_pairs))
         print('save p_pairs and n_pairs ......')
-        with open(p_pairs_path,'w') as f:
+        with open(p_pairs_path,'wb') as f:
             pickle.dump(p_pairs,f)
-        with open(n_pairs_path,'w') as f:
+        with open(n_pairs_path,'wb') as f:
             pickle.dump(n_pairs,f)
 
     print('_get_train_all_pn_pairs finish ......')
@@ -183,7 +183,7 @@ def _get_train_all_pn_pairs(dataset_dir, out_dir, split_name='train', augment_ra
         fpath = os.path.join(out_dir, 'pn_pairs_num_train_flip.p')
     else:
         fpath = os.path.join(out_dir, 'pn_pairs_num_'+split_name.split('_')[0]+'.p')
-    with open(fpath,'w') as f:
+    with open(fpath,'wb') as f:
         pickle.dump(pn_pairs_num,f)
 
     return p_pairs, n_pairs
@@ -362,8 +362,8 @@ def _format_data(sess, image_reader, folder_path, pairs, i, labels, id_map, attr
     id_0 = pairs[i][0].split('_')[0]
     id_1 = pairs[i][1].split('_')[0]
 
-    image_raw_0 = tf.gfile.FastGFile(img_path_0, 'r').read()
-    image_raw_1 = tf.gfile.FastGFile(img_path_1, 'r').read()
+    image_raw_0 = tf.gfile.FastGFile(img_path_0, 'rb').read()
+    image_raw_1 = tf.gfile.FastGFile(img_path_1, 'rb').read()
     height, width = image_reader.read_image_dims(sess, image_raw_0)
 
     attrs_0 = []
@@ -794,25 +794,26 @@ def _convert_dataset_one_pair_rec_withFlip(out_dir, split_name, split_name_flip,
     subsets_dic = None
     all_peaks_dic_flip = None
     subsets_dic_flip = None
-    with open(pose_peak_path, 'r') as f:
-        all_peaks_dic = pickle.load(f)
-    with open(pose_sub_path, 'r') as f:
-        subsets_dic = pickle.load(f)
+    with open(pose_peak_path, 'rb') as f:
+        all_peaks_dic = pickle.load(f,encoding='bytes')
+    with open(pose_sub_path, 'rb') as f:
+        subsets_dic = pickle.load(f,encoding='bytes')
     if USE_FLIP:
-        with open(pose_peak_path_flip, 'r') as f:
-            all_peaks_dic_flip = pickle.load(f)
-        with open(pose_sub_path_flip, 'r') as f:
-            subsets_dic_flip = pickle.load(f)
+        with open(pose_peak_path_flip, 'rb') as f:
+            all_peaks_dic_flip = pickle.load(f,encoding='bytes')
+        with open(pose_sub_path_flip, 'rb') as f:
+            subsets_dic_flip = pickle.load(f,encoding='bytes')
     # Transform ids to [0, ..., num_of_ids]
     id_cnt = 0
     id_map = {}
     for i in range(0, len(pairs)):
         id_0 = pairs[i][0].split('_')[0]
         id_1 = pairs[i][1].split('_')[0]
-        if not id_map.has_key(id_0):
+        if id_0 not in id_map.keys():
+        # if not id_map.has_key(id_0):
             id_map[id_0] = id_cnt
             id_cnt += 1
-        if not id_map.has_key(id_1):
+        if id_1 not in id_map.keys():
             id_map[id_1] = id_cnt
             id_cnt += 1
     print('id_map length:%d' % len(id_map))
