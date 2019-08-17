@@ -77,6 +77,8 @@ def get_split(split_name, dataset_dir, data_name='DeepFashion', file_pattern=Non
 
 
   keys_to_features = {
+     'image_name_0': tf.FixedLenFeature([], tf.string, default_value=''),
+     'image_name_1': tf.FixedLenFeature([], tf.string, default_value=''),
      'image_raw_0' : tf.FixedLenFeature([], tf.string),
      'image_raw_1' : tf.FixedLenFeature([], tf.string),
      'label': tf.FixedLenFeature([], tf.int64), # For FixedLenFeature, [] means scalar
@@ -103,6 +105,8 @@ def get_split(split_name, dataset_dir, data_name='DeepFashion', file_pattern=Non
   }
 
   items_to_handlers = {
+      'image_name_0': slim.tfexample_decoder.Tensor('image_name_0'),
+      'image_name_1': slim.tfexample_decoder.Tensor('image_name_1'),
       'image_raw_0': slim.tfexample_decoder.Image(image_key='image_raw_0', format_key='image_format'),
       'image_raw_1': slim.tfexample_decoder.Image(image_key='image_raw_1', format_key='image_format'),
       'label': slim.tfexample_decoder.Tensor('label'),

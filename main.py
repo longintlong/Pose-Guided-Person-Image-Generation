@@ -9,6 +9,9 @@ from utils import prepare_dirs_and_logger, save_config
 import pdb, os
 
 def main(config):
+    with open("data/DF_test_data/p_pairs_test.p", 'rb') as f:
+        pn_pairs = pickle.load(f)
+
     prepare_dirs_and_logger(config)
 
     if config.gpu>-1:
@@ -17,7 +20,7 @@ def main(config):
 
     config.data_format = 'NHWC'
 
-    if 1==config.model: 
+    if 1==config.model:
         trainer = PG2(config)
         trainer.init_net()
     elif 11==config.model:

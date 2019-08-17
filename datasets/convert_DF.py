@@ -28,6 +28,7 @@ import numpy as np
 import pickle
 import pdb
 import glob
+import pandas as pd
 
 # The URL where the Market1501 data can be downloaded.
 # _DATA_URL = 'xxxxx'
@@ -88,7 +89,7 @@ def _get_image_file_list(dataset_dir, split_name):
         # pdb.set_trace()
         filelist = sorted(filelist)
     elif split_name == 'test':
-        filelist = sorted(os.listdir(folder_path))
+        filelist = (os.listdir(folder_path))
         # filelist = sorted(os.listdir(folder_path))[6617:]  # before 6617 are junk detections
         # filelist = glob.glob(os.path.join(folder_path, _IMG_PATTERN))
         # filelist = sorted(filelist)[6617:]
@@ -131,35 +132,52 @@ def _get_train_all_pn_pairs(dataset_dir, out_dir, split_name='train', augment_ra
         with open(n_pairs_path,'rb') as f:
             n_pairs = pickle.load(f)
     else:
-        filelist = _get_image_file_list(dataset_dir, split_name)
-        filenames = []
         p_pairs = []
         n_pairs = []
-        # pdb.set_trace()
-        if 'test_seq'==split_name:
-            for i in range(0, len(filelist)):
-                for j in range(0, len(filelist)):
-                    p_pairs.append([filelist[i],filelist[j]])
-                    if len(p_pairs)%100000==0:
-                            print(len(p_pairs))
 
-        elif 'same_diff_cam'==mode:
-            for i in range(0, len(filelist)):
-                names = filelist[i].split('_')
-                id_i = names[0]
-                for j in range(i+1, len(filelist)):
-                    names = filelist[j].split('_')
-                    id_j = names[0]
-                    if id_j == id_i:
-                        p_pairs.append([filelist[i],filelist[j]])
-                        p_pairs.append([filelist[j],filelist[i]])  # if two streams share the same weights, no need switch
-                        if len(p_pairs)%100000==0:
-                                print(len(p_pairs))
-                    elif j%2000==0 and id_j != id_i:  # limit the neg pairs to 1/40, otherwise it cost too much time
-                        n_pairs.append([filelist[i],filelist[j]])
-                        # n_pairs.append([filelist[j],filelist[i]])  # two streams share the same weights, no need switch
-                        if len(n_pairs)%100000==0:
-                                print(len(n_pairs))
+        pair_lst_path = os.path.join(dataset_dir,"PoseFiltered","fashion-pairs-test.csv")
+        pair_df = pd.read_csv(pair_lst_path)
+        for index, row in pair_df.iterrows():
+            source = row['from']
+            id_s = source[source.find("id") + 2:source.find("id") + 10]
+            target = row['to']
+            id_t = target[target.find("id") + 2:target.find("id") + 10]
+            if id_s == id_t:
+                p_pairs.append([source, target])
+            else:
+                n_pairs.append([source, target])
+
+        # filelist = _get_image_file_list(dataset_dir, split_name)
+        # filenames = []
+        # pdb.set_trace()
+        # if 'test_seq'==split_name:
+        #     for i in range(0, len(filelist)):
+        #         for j in range(0, len(filelist)):
+        #             p_pairs.append([filelist[i],filelist[j]])
+        #             if len(p_pairs)%100000==0:
+        #                     print(len(p_pairs))
+        #
+        # elif 'same_diff_cam'==mode:
+        #     for i in range(0, len(filelist)):
+        #         names = filelist[i].split('_')[0]
+        #         id_i = names[names.find("id")+2:names.find("id") + 10]
+        #         # names = filelist[i].split('_')
+        #         # id_i = names[0]
+        #         for j in range(i+1, len(filelist)):
+        #             names = filelist[j].split('_')[0]
+        #             id_j = names[names.find("id") + 2:names.find("id") + 10]
+        #             # names = filelist[j].split('_')
+        #             # id_j = names[0]
+        #             if id_j == id_i:
+        #                 p_pairs.append([filelist[i],filelist[j]])
+        #                 p_pairs.append([filelist[j],filelist[i]])  # if two streams share the same weights, no need switch
+        #                 if len(p_pairs)%100000==0:
+        #                         print(len(p_pairs))
+        #             elif j%2000==0 and id_j != id_i:  # limit the neg pairs to 1/40, otherwise it cost too much time
+        #                 n_pairs.append([filelist[i],filelist[j]])
+        #                 # n_pairs.append([filelist[j],filelist[i]])  # two streams share the same weights, no need switch
+        #                 if len(n_pairs)%100000==0:
+        #                         print(len(n_pairs))
 
         print('repeat positive pairs augment_ratio times and cut down negative pairs to balance data ......')
         p_pairs = p_pairs * augment_ratio  
@@ -359,9 +377,11 @@ def _format_data(sess, image_reader, folder_path, pairs, i, labels, id_map, attr
     img_path_0 = os.path.join(folder_path, pairs[i][0])
     img_path_1 = os.path.join(folder_path, pairs[i][1])
 
-    id_0 = pairs[i][0].split('_')[0]
-    id_1 = pairs[i][1].split('_')[0]
+    # id_0 = pairs[i][0].split('_')[0]
+    # id_1 = pairs[i][1].split('_')[0]
 
+    id_0 = img_path_0[img_path_0.find("id") + 2:img_path_0.find("id") + 10]
+    id_1 = img_path_1[img_path_1.find("id") + 2:img_path_1.find("id") + 10]
     image_raw_0 = tf.gfile.FastGFile(img_path_0, 'rb').read()
     image_raw_1 = tf.gfile.FastGFile(img_path_1, 'rb').read()
     height, width = image_reader.read_image_dims(sess, image_raw_0)
@@ -807,8 +827,10 @@ def _convert_dataset_one_pair_rec_withFlip(out_dir, split_name, split_name_flip,
     id_cnt = 0
     id_map = {}
     for i in range(0, len(pairs)):
-        id_0 = pairs[i][0].split('_')[0]
-        id_1 = pairs[i][1].split('_')[0]
+        id_0 = pairs[i][0][pairs[i][0].find("id") + 2:pairs[i][0].find("id") + 10]
+        id_1 = pairs[i][1][pairs[i][1].find("id") + 2:pairs[i][1].find("id") + 10]
+        # id_0 = pairs[i][0].split('_')[0]
+        # id_1 = pairs[i][1].split('_')[0]
         if id_0 not in id_map.keys():
         # if not id_map.has_key(id_0):
             id_map[id_0] = id_cnt
@@ -835,7 +857,6 @@ def _convert_dataset_one_pair_rec_withFlip(out_dir, split_name, split_name_flip,
         image_reader = ImageReader()
 
         with tf.Session('') as sess:
-
             for shard_id in range(num_shards):
                 output_filename = _get_dataset_filename(
                         dataset_dir, out_dir, split_name, shard_id)
@@ -960,7 +981,7 @@ def run_one_pair_rec(dataset_dir, out_dir, split_name):
         pairs = p_pairs
         labels = p_labels
         combined = list(zip(pairs, labels))
-        random.shuffle(combined)
+        # random.shuffle(combined)
         pairs[:], labels[:] = zip(*combined)
 
         ## Test will not use flip

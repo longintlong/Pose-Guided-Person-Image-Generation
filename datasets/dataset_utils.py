@@ -64,6 +64,7 @@ def bytes_feature(values):
   Returns:
     a TF-Feature.
   """
+  values = tf.compat.as_bytes(values)
   return tf.train.Feature(bytes_list=tf.train.BytesList(value=[values]))
 
 

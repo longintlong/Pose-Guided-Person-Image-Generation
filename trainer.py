@@ -10,6 +10,7 @@ from itertools import chain
 from collections import deque
 import pickle, shutil
 from tqdm import tqdm
+import pandas as pd
 
 from tensorflow.python.ops import control_flow_ops
 
@@ -377,7 +378,12 @@ class PG2(object):
         if not os.path.exists(test_result_dir_mask_target):
             os.makedirs(test_result_dir_mask_target)
 
+        with open("data/DF_test_data/p_pairs_test.p", 'rb') as f:
+            p_pairs = pickle.load(f)
+        c = 0
         for i in range(400):
+            if c == len(p_pairs):
+                break
             x_fixed, x_target_fixed, pose_fixed, pose_target_fixed, mask_fixed, mask_target_fixed = self.get_image_from_loader()
             x = utils_wgan.process_image(x_fixed, 127.5, 127.5)
             x_target = utils_wgan.process_image(x_target_fixed, 127.5, 127.5)
@@ -389,20 +395,30 @@ class PG2(object):
             pt = (np.amax(pose_target_fixed, axis=-1, keepdims=False)+1.0)*127.5
             for j in range(self.batch_size):
                 idx = i*self.batch_size+j
+                # fasionMENShirtsPolosid0000372503_1front.jpg_fasionMENShirtsPolosid0000372503_3back.jpg.png
+                img_name = p_pairs[c][0] + '_' + p_pairs[c][1]
+
                 im = Image.fromarray(x_fixed[j,:].astype(np.uint8))
-                im.save('%s/%05d.png'%(test_result_dir_x, idx))
+                im.save('%s/%s.png'%(test_result_dir_x, img_name))
+
                 im = Image.fromarray(x_target_fixed[j,:].astype(np.uint8))
-                im.save('%s/%05d.png'%(test_result_dir_x_target, idx))
+                im.save('%s/%s.png'%(test_result_dir_x_target, img_name))
+
                 im = Image.fromarray(x_fake[j,:].astype(np.uint8))
-                im.save('%s/%05d.png'%(test_result_dir_G, idx))
+                im.save('%s/%s.png'%(test_result_dir_G, img_name))
+
                 im = Image.fromarray(p[j,:].astype(np.uint8))
-                im.save('%s/%05d.png'%(test_result_dir_pose, idx))
+                im.save('%s/%s.png'%(test_result_dir_pose, img_name))
+
                 im = Image.fromarray(pt[j,:].astype(np.uint8))
-                im.save('%s/%05d.png'%(test_result_dir_pose_target, idx))
+                im.save('%s/%s.png'%(test_result_dir_pose_target, img_name))
+
                 im = Image.fromarray(mask_fixed[j,:].squeeze().astype(np.uint8))
-                im.save('%s/%05d.png'%(test_result_dir_mask, idx))
+                im.save('%s/%s.png'%(test_result_dir_mask, img_name))
+
                 im = Image.fromarray(mask_target_fixed[j,:].squeeze().astype(np.uint8))
-                im.save('%s/%05d.png'%(test_result_dir_mask_target, idx))
+                im.save('%s/%s.png'%(test_result_dir_mask_target, img_name))
+                c += 1
             if 0==i:
                 save_image(x_fixed, '{}/x_fixed.png'.format(test_result_dir))
                 save_image(x_target_fixed, '{}/x_target_fixed.png'.format(test_result_dir))
