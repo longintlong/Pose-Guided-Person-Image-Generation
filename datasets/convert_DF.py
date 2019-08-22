@@ -134,18 +134,21 @@ def _get_train_all_pn_pairs(dataset_dir, out_dir, split_name='train', augment_ra
     else:
         p_pairs = []
         n_pairs = []
+        pair_lst_path = os.path.join(dataset_dir, "PoseFiltered", "fashion-pairs-test.p")
+        with open(pair_lst_path,'rb') as f:
+            p_pairs = pickle.load(f)
 
-        pair_lst_path = os.path.join(dataset_dir,"PoseFiltered","fashion-pairs-test.csv")
-        pair_df = pd.read_csv(pair_lst_path)
-        for index, row in pair_df.iterrows():
-            source = row['from']
-            id_s = source[source.find("id") + 2:source.find("id") + 10]
-            target = row['to']
-            id_t = target[target.find("id") + 2:target.find("id") + 10]
-            if id_s == id_t:
-                p_pairs.append([source, target])
-            else:
-                n_pairs.append([source, target])
+        # pair_lst_path = os.path.join(dataset_dir,"PoseFiltered","fashion-pairs-test.csv")
+        # pair_df = pd.read_csv(pair_lst_path)
+        # for index, row in pair_df.iterrows():
+        #     source = row['from']
+        #     id_s = source[source.find("id") + 2:source.find("id") + 10]
+        #     target = row['to']
+        #     id_t = target[target.find("id") + 2:target.find("id") + 10]
+        #     if id_s == id_t:
+        #         p_pairs.append([source, target])
+        #     else:
+        #         n_pairs.append([source, target])
 
         # filelist = _get_image_file_list(dataset_dir, split_name)
         # filenames = []
@@ -412,6 +415,8 @@ def _format_data(sess, image_reader, folder_path, pairs, i, labels, id_map, attr
         ## Pose 0
         # peaks = all_peaks_dic[pairs[i][0]]
         peaks = _get_valid_peaks(all_peaks_dic[pairs[i][0]], subsets_dic[pairs[i][0]])
+        if peaks is None:
+            return None
         # print(peaks)
         indices_r4_0, values_r4_0, shape = _getSparsePose(peaks, height, width, 18, radius=4, mode='Solid')
         indices_r4_0, shape_0 = _oneDimSparsePose(indices_r4_0, shape)
@@ -439,6 +444,8 @@ def _format_data(sess, image_reader, folder_path, pairs, i, labels, id_map, attr
         ## Pose 1
         # peaks = all_peaks_dic[pairs[i][1]]
         peaks = _get_valid_peaks(all_peaks_dic[pairs[i][1]], subsets_dic[pairs[i][1]])
+        if peaks is None:
+            return None
         indices_r4_1, values_r4_1, shape = _getSparsePose(peaks, height, width, 18, radius=4, mode='Solid')
         indices_r4_1, shape_1 = _oneDimSparsePose(indices_r4_1, shape)
         indices_r8_1, values_r8_1, shape = _getSparsePose(peaks, height, width, 18, radius=8, mode='Solid')
@@ -852,7 +859,7 @@ def _convert_dataset_one_pair_rec_withFlip(out_dir, split_name, split_name_flip,
                 id_map_flip[id_1] = id_cnt
                 id_cnt += 1
         print('id_map_flip length:%d' % len(id_map_flip))
-
+    # Pairs = pairs
     with tf.Graph().as_default():
         image_reader = ImageReader()
 
@@ -883,11 +890,15 @@ def _convert_dataset_one_pair_rec_withFlip(out_dir, split_name, split_name_flip,
                     start_ndx = shard_id * num_per_shard
                     end_ndx = min((shard_id+1) * num_per_shard, len(pairs))
                     for i in range(start_ndx, end_ndx):
+                        if i > len(pairs) - 1:
+                            break
                         sys.stdout.write('\r>> Converting image %d/%d shard %d' % (
                                 i+1, len(pairs), shard_id))
                         sys.stdout.flush()
                         example = _format_data(sess, image_reader, folder_path, pairs, i, labels, id_map, attr_mat, id_map_attr, all_peaks_dic, subsets_dic)
                         if None==example:
+                            print(pairs[i])
+                            pairs.pop(i)
                             continue
                         tfrecord_writer.write(example.SerializeToString())
                         cnt += 1
@@ -899,6 +910,14 @@ def _convert_dataset_one_pair_rec_withFlip(out_dir, split_name, split_name_flip,
     print('cnt:',cnt)
     with open(os.path.join(out_dir,'tf_record_pair_num.txt'),'w') as f:
         f.write('cnt:%d' % cnt)
+    # p_pairs_path = os.path.join(out_dir, 'p_pairs_' + split_name.split('_')[0] + '.p')
+    # with open(p_pairs_path,'wb') as f:
+    #     pickle.dump(pairs,f)
+    #
+    # fpath = os.path.join(out_dir, 'pn_pairs_num_'+split_name.split('_')[0]+'.p')
+    # with open(fpath, 'wb') as f:
+    #     pickle.dump(len(pairs), f)
+
 
 def run_one_pair_rec(dataset_dir, out_dir, split_name):
     # if not tf.gfile.Exists(dataset_dir):
@@ -1025,3 +1044,6 @@ if __name__ == '__main__':
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
     run_one_pair_rec(dataset_dir, out_dir, split_name)
+
+
+# CUDA_VISIBLE_DEVICES=7 python convert_market.py './data/Market1501_img_pose_attr_seg' 'test'

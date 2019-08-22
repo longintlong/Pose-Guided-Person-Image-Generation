@@ -98,7 +98,7 @@ def _get_image_file_list(dataset_dir, split_name):
 
     # Remove non-jpg files
     valid_filelist = []
-    for i in xrange(0, len(filelist)):
+    for i in range(0, len(filelist)):
         if filelist[i].endswith('.jpg') or filelist[i].endswith('.png'):
             valid_filelist.append(filelist[i])
 
@@ -129,67 +129,71 @@ def _get_train_all_pn_pairs(dataset_dir, out_dir, split_name='train', augment_ra
         p_pairs_path = os.path.join(out_dir, 'p_pairs_'+split_name.split('_')[0]+'.p')
         n_pairs_path = os.path.join(out_dir, 'n_pairs_'+split_name.split('_')[0]+'.p')
     if os.path.exists(p_pairs_path):
-        with open(p_pairs_path,'r') as f:
+        with open(p_pairs_path,'rb') as f:
             p_pairs = pickle.load(f)
-        with open(n_pairs_path,'r') as f:
+        with open(n_pairs_path,'rb') as f:
             n_pairs = pickle.load(f)
     else:
-        filelist = _get_image_file_list(dataset_dir, split_name)
+        # filelist = _get_image_file_list(dataset_dir, split_name)
         filenames = []
         p_pairs = []
         n_pairs = []
-        if 'diff_cam'==mode:
-            for i in xrange(0, len(filelist)):
-                id_i = filelist[i][0:4]
-                cam_i = filelist[i][6]
-                for j in xrange(i+1, len(filelist)):
-                    id_j = filelist[j][0:4]
-                    cam_j = filelist[j][6]
-                    if id_j == id_i and cam_j != cam_i:
-                        p_pairs.append([filelist[i],filelist[j]])
-                        # p_pairs.append([filelist[j],filelist[i]])  # two streams share the same weights, no need switch
-                        if len(p_pairs)%100000==0:
-                                print(len(p_pairs))
-                    elif j%10==0 and id_j != id_i and cam_j != cam_i:  # limit the neg pairs to 1/10, otherwise it cost too much time
-                        n_pairs.append([filelist[i],filelist[j]])
-                        # n_pairs.append([filelist[j],filelist[i]])  # two streams share the same weights, no need switch
-                        if len(n_pairs)%100000==0:
-                                print(len(n_pairs))
-        elif 'same_cam'==mode:
-            for i in xrange(0, len(filelist)):
-                id_i = filelist[i][0:4]
-                cam_i = filelist[i][6]
-                for j in xrange(i+1, len(filelist)):
-                    id_j = filelist[j][0:4]
-                    cam_j = filelist[j][6]
-                    if id_j == id_i and cam_j == cam_i:
-                        p_pairs.append([filelist[i],filelist[j]])
-                        # p_pairs.append([filelist[j],filelist[i]])  # two streams share the same weights, no need switch
-                        if len(p_pairs)%100000==0:
-                                print(len(p_pairs))
-                    elif j%10==0 and id_j != id_i and cam_j == cam_i:  # limit the neg pairs to 1/10, otherwise it cost too much time
-                        n_pairs.append([filelist[i],filelist[j]])
-                        # n_pairs.append([filelist[j],filelist[i]])  # two streams share the same weights, no need switch
-                        if len(n_pairs)%100000==0:
-                                print(len(n_pairs))
-        elif 'same_diff_cam'==mode:
-            for i in xrange(0, len(filelist)):
-                id_i = filelist[i][0:4]
-                cam_i = filelist[i][6]
-                for j in xrange(i+1, len(filelist)):
-                    id_j = filelist[j][0:4]
-                    cam_j = filelist[j][6]
-                    if id_j == id_i:
-                        p_pairs.append([filelist[i],filelist[j]])
-                        if add_switch_pair:
-                            p_pairs.append([filelist[j],filelist[i]])  # if two streams share the same weights, no need switch
-                        if len(p_pairs)%100000==0:
-                                print(len(p_pairs))
-                    elif j%2000==0 and id_j != id_i:  # limit the neg pairs to 1/40, otherwise it cost too much time
-                        n_pairs.append([filelist[i],filelist[j]])
-                        # n_pairs.append([filelist[j],filelist[i]])  # two streams share the same weights, no need switch
-                        if len(n_pairs)%100000==0:
-                                print(len(n_pairs))
+        pair_lst_path = os.path.join(dataset_dir, "Market-1501_PoseFiltered", "market-pairs-test.p")
+        with open(pair_lst_path,'rb') as f:
+            p_pairs = pickle.load(f)
+
+        # if 'diff_cam'==mode:
+        #     for i in range(0, len(filelist)):
+        #         id_i = filelist[i][0:4]
+        #         cam_i = filelist[i][6]
+        #         for j in range(i+1, len(filelist)):
+        #             id_j = filelist[j][0:4]
+        #             cam_j = filelist[j][6]
+        #             if id_j == id_i and cam_j != cam_i:
+        #                 p_pairs.append([filelist[i],filelist[j]])
+        #                 # p_pairs.append([filelist[j],filelist[i]])  # two streams share the same weights, no need switch
+        #                 if len(p_pairs)%100000==0:
+        #                         print(len(p_pairs))
+        #             elif j%10==0 and id_j != id_i and cam_j != cam_i:  # limit the neg pairs to 1/10, otherwise it cost too much time
+        #                 n_pairs.append([filelist[i],filelist[j]])
+        #                 # n_pairs.append([filelist[j],filelist[i]])  # two streams share the same weights, no need switch
+        #                 if len(n_pairs)%100000==0:
+        #                         print(len(n_pairs))
+        # elif 'same_cam'==mode:
+        #     for i in range(0, len(filelist)):
+        #         id_i = filelist[i][0:4]
+        #         cam_i = filelist[i][6]
+        #         for j in range(i+1, len(filelist)):
+        #             id_j = filelist[j][0:4]
+        #             cam_j = filelist[j][6]
+        #             if id_j == id_i and cam_j == cam_i:
+        #                 p_pairs.append([filelist[i],filelist[j]])
+        #                 # p_pairs.append([filelist[j],filelist[i]])  # two streams share the same weights, no need switch
+        #                 if len(p_pairs)%100000==0:
+        #                         print(len(p_pairs))
+        #             elif j%10==0 and id_j != id_i and cam_j == cam_i:  # limit the neg pairs to 1/10, otherwise it cost too much time
+        #                 n_pairs.append([filelist[i],filelist[j]])
+        #                 # n_pairs.append([filelist[j],filelist[i]])  # two streams share the same weights, no need switch
+        #                 if len(n_pairs)%100000==0:
+        #                         print(len(n_pairs))
+        # elif 'same_diff_cam'==mode:
+        #     for i in range(0, len(filelist)):
+        #         id_i = filelist[i][0:4]
+        #         cam_i = filelist[i][6]
+        #         for j in range(i+1, len(filelist)):
+        #             id_j = filelist[j][0:4]
+        #             cam_j = filelist[j][6]
+        #             if id_j == id_i:
+        #                 p_pairs.append([filelist[i],filelist[j]])
+        #                 if add_switch_pair:
+        #                     p_pairs.append([filelist[j],filelist[i]])  # if two streams share the same weights, no need switch
+        #                 if len(p_pairs)%100000==0:
+        #                         print(len(p_pairs))
+        #             elif j%2000==0 and id_j != id_i:  # limit the neg pairs to 1/40, otherwise it cost too much time
+        #                 n_pairs.append([filelist[i],filelist[j]])
+        #                 # n_pairs.append([filelist[j],filelist[i]])  # two streams share the same weights, no need switch
+        #                 if len(n_pairs)%100000==0:
+        #                         print(len(n_pairs))
 
         print('repeat positive pairs augment_ratio times and cut down negative pairs to balance data ......')
         p_pairs = p_pairs * augment_ratio  
@@ -198,9 +202,9 @@ def _get_train_all_pn_pairs(dataset_dir, out_dir, split_name='train', augment_ra
         print('p_pairs length:%d' % len(p_pairs))
         print('n_pairs length:%d' % len(n_pairs))
         print('save p_pairs and n_pairs ......')
-        with open(p_pairs_path,'w') as f:
+        with open(p_pairs_path,'wb') as f:
             pickle.dump(p_pairs,f)
-        with open(n_pairs_path,'w') as f:
+        with open(n_pairs_path,'wb') as f:
             pickle.dump(n_pairs,f)
 
     print('_get_train_all_pn_pairs finish ......')
@@ -213,7 +217,7 @@ def _get_train_all_pn_pairs(dataset_dir, out_dir, split_name='train', augment_ra
         fpath = os.path.join(out_dir, 'pn_pairs_num_train_flip.p')
     else:
         fpath = os.path.join(out_dir, 'pn_pairs_num_'+split_name.split('_')[0]+'.p')
-    with open(fpath,'w') as f:
+    with open(fpath,'wb') as f:
         pickle.dump(pn_pairs_num,f)
 
     return p_pairs, n_pairs
@@ -262,7 +266,7 @@ def _getPoseMask(peaks, height, width, radius=4, var=4, mode='Solid'):
             sampleN = int(distance/radius)
             # sampleN = 0
             if sampleN>1:
-                for i in xrange(1,sampleN):
+                for i in range(1,sampleN):
                     r = r0 + (r1-r0)*i/sampleN
                     c = c0 + (c1-c0)*i/sampleN
                     ind, val = _getSparseKeypoint(r, c, 0, height, width, radius, var, mode)
@@ -403,8 +407,8 @@ def _format_data(sess, image_reader, folder_path, pairs, idx, labels, id_map, at
     cam_0 = pairs[idx][0][6]
     cam_1 = pairs[idx][1][6]
 
-    image_raw_0 = tf.gfile.FastGFile(img_path_0, 'r').read()
-    image_raw_1 = tf.gfile.FastGFile(img_path_1, 'r').read()
+    image_raw_0 = tf.gfile.FastGFile(img_path_0, 'rb').read()
+    image_raw_1 = tf.gfile.FastGFile(img_path_1, 'rb').read()
     height, width = image_reader.read_image_dims(sess, image_raw_0)
 
     ########################## Attribute ##########################
@@ -418,27 +422,28 @@ def _format_data(sess, image_reader, folder_path, pairs, idx, labels, id_map, at
     attrs_w2v100_1 = []
     attrs_w2v150_0 = []
     attrs_w2v150_1 = []
-    idx_0 = id_map_attr[id_0]
-    idx_1 = id_map_attr[id_1]
+    if id_map_attr is not None:
+        idx_0 = id_map_attr[id_0]
+        idx_1 = id_map_attr[id_1]
     # pdb.set_trace()
     if attr_onehot_mat is not None:
         for name in attr_onehot_mat.dtype.names:
             attrs_0.append(attr_onehot_mat[(name)][0][0][0][idx_0])
             attrs_1.append(attr_onehot_mat[(name)][0][0][0][idx_1])
     if attr_w2v25_mat is not None:
-        for i in xrange(attr_w2v25_mat[0].shape[0]):
+        for i in range(attr_w2v25_mat[0].shape[0]):
             attrs_w2v25_0 = attrs_w2v25_0 + attr_w2v25_mat[0][i][idx_0].tolist()
             attrs_w2v25_1 = attrs_w2v25_1 + attr_w2v25_mat[0][i][idx_1].tolist()
     if attr_w2v50_mat is not None:
-        for i in xrange(attr_w2v50_mat[0].shape[0]):
+        for i in range(attr_w2v50_mat[0].shape[0]):
             attrs_w2v50_0 = attrs_w2v50_0 + attr_w2v50_mat[0][i][idx_0].tolist()
             attrs_w2v50_1 = attrs_w2v50_1 + attr_w2v50_mat[0][i][idx_1].tolist()
     if attr_w2v100_mat is not None:
-        for i in xrange(attr_w2v100_mat[0].shape[0]):
+        for i in range(attr_w2v100_mat[0].shape[0]):
             attrs_w2v100_0 = attrs_w2v100_0 + attr_w2v100_mat[0][i][idx_0].tolist()
             attrs_w2v100_1 = attrs_w2v100_1 + attr_w2v100_mat[0][i][idx_1].tolist()
     if attr_w2v150_mat is not None:
-        for i in xrange(attr_w2v150_mat[0].shape[0]):
+        for i in range(attr_w2v150_mat[0].shape[0]):
             attrs_w2v150_0 = attrs_w2v150_0 + attr_w2v150_mat[0][i][idx_0].tolist()
             attrs_w2v150_1 = attrs_w2v150_1 + attr_w2v150_mat[0][i][idx_1].tolist()
 
@@ -474,6 +479,8 @@ def _format_data(sess, image_reader, folder_path, pairs, idx, labels, id_map, at
     if (all_peaks_dic is not None) and (pairs[idx][0] in all_peaks_dic) and (pairs[idx][1] in all_peaks_dic):
         ###### Pose 0 ######
         peaks = _get_valid_peaks(all_peaks_dic[pairs[idx][0]], subsets_dic[pairs[idx][0]])
+        if peaks is None:
+            return None
         indices_r4_0, values_r4_0, shape = _getSparsePose(peaks, height, width, 18, radius=4, mode='Solid')
         indices_r4_0, shape_0 = _oneDimSparsePose(indices_r4_0, shape)
         pose_mask_r4_0 = _getPoseMask(peaks, height, width, radius=4, mode='Solid')
@@ -493,6 +500,8 @@ def _format_data(sess, image_reader, folder_path, pairs, idx, labels, id_map, at
 
         ###### Pose 1 ######
         peaks = _get_valid_peaks(all_peaks_dic[pairs[idx][1]], subsets_dic[pairs[idx][1]])
+        if peaks is None:
+            return None
         indices_r4_1, values_r4_1, shape = _getSparsePose(peaks, height, width, 18, radius=4, mode='Solid')
         indices_r4_1, shape_1 = _oneDimSparsePose(indices_r4_1, shape)
         pose_mask_r4_1 = _getPoseMask(peaks, height, width, radius=4, mode='Solid')
@@ -762,9 +771,9 @@ def _convert_dataset_one_pair_rec_withFlip(out_dir, split_name, split_name_flip,
         filelist = _get_image_file_list(dataset_dir, split_name)
         filelist.sort()
         # pdb.set_trace()
-        for i in xrange(0, len(filelist)):
+        for i in range(0, len(filelist)):
             id_i = filelist[i][0:4]
-            if not id_map_attr.has_key(id_i):
+            if id_i not in id_map_attr.keys():
                 id_map_attr[id_i] = id_cnt
                 id_cnt += 1
         print('id_map_attr length:%d' % len(id_map_attr))
@@ -806,14 +815,14 @@ def _convert_dataset_one_pair_rec_withFlip(out_dir, split_name, split_name_flip,
     subsets_dic = None
     all_peaks_dic_flip = None
     subsets_dic_flip = None
-    with open(pose_peak_path, 'r') as f:
+    with open(pose_peak_path, 'rb') as f:
         all_peaks_dic = pickle.load(f)
-    with open(pose_sub_path, 'r') as f:
+    with open(pose_sub_path, 'rb') as f:
         subsets_dic = pickle.load(f)
     if USE_FLIP:
-        with open(pose_peak_path_flip, 'r') as f:
+        with open(pose_peak_path_flip, 'rb') as f:
             all_peaks_dic_flip = pickle.load(f)
-        with open(pose_sub_path_flip, 'r') as f:
+        with open(pose_sub_path_flip, 'rb') as f:
             subsets_dic_flip = pickle.load(f)
     # Transform ids to [0, ..., num_of_ids]
     id_cnt = 0
@@ -821,10 +830,10 @@ def _convert_dataset_one_pair_rec_withFlip(out_dir, split_name, split_name_flip,
     for i in range(0, len(pairs)):
         id_0 = pairs[i][0][0:4]
         id_1 = pairs[i][1][0:4]
-        if not id_map.has_key(id_0):
+        if id_0 not in id_map.keys():
             id_map[id_0] = id_cnt
             id_cnt += 1
-        if not id_map.has_key(id_1):
+        if id_1 not in id_map.keys():
             id_map[id_1] = id_cnt
             id_cnt += 1
     print('id_map length:%d' % len(id_map))
@@ -858,12 +867,15 @@ def _convert_dataset_one_pair_rec_withFlip(out_dir, split_name, split_name_flip,
                         start_ndx = shard_id * num_per_shard
                         end_ndx = min((shard_id+1) * num_per_shard, len(pairs_flip))
                         for i in range(start_ndx, end_ndx):
+                            if i > len(pairs) - 1:
+                                break
                             sys.stdout.write('\r>> Converting image %d/%d shard %d' % (
                                     i+1, len(pairs_flip), shard_id))
                             sys.stdout.flush()
                             example = _format_data(sess, image_reader, folder_path_flip, pairs_flip, i, labels_flip, id_map_flip, attr_onehot_mat, 
                                 attr_w2v25_mat, attr_w2v50_mat, attr_w2v100_mat, attr_w2v150_mat, id_map_attr, all_peaks_dic_flip, subsets_dic_flip, seg_data_dir, FLIP=True)
                             if None==example:
+                                print(pairs[i])
                                 continue
                             tfrecord_writer.write(example.SerializeToString())
                             cnt += 1
@@ -873,12 +885,18 @@ def _convert_dataset_one_pair_rec_withFlip(out_dir, split_name, split_name_flip,
                     start_ndx = shard_id * num_per_shard
                     end_ndx = min((shard_id+1) * num_per_shard, len(pairs))
                     for i in range(start_ndx, end_ndx):
+                        if i > len(pairs) - 1:
+                            break
                         sys.stdout.write('\r>> Converting image %d/%d shard %d' % (
                                 i+1, len(pairs), shard_id))
                         sys.stdout.flush()
-                        example = _format_data(sess, image_reader, folder_path, pairs, i, labels, id_map, attr_onehot_mat, 
-                            attr_w2v25_mat, attr_w2v50_mat, attr_w2v100_mat, attr_w2v150_mat, id_map_attr, all_peaks_dic, subsets_dic, seg_data_dir, FLIP=False)
+                        # example = _format_data(sess, image_reader, folder_path, pairs, i, labels, id_map, attr_onehot_mat,
+                        #     attr_w2v25_mat, attr_w2v50_mat, attr_w2v100_mat, attr_w2v150_mat, id_map_attr, all_peaks_dic, subsets_dic, seg_data_dir, FLIP=False)
+                        example = _format_data(sess, image_reader, folder_path, pairs, i, labels, id_map, None,
+                                               None, None, None, None, None, all_peaks_dic,
+                                               subsets_dic, seg_data_dir, FLIP=False)
                         if None==example:
+                            print(pairs[i])
                             continue
                         tfrecord_writer.write(example.SerializeToString())
                         cnt += 1
@@ -914,7 +932,7 @@ def run_one_pair_rec(dataset_dir, out_dir, split_name):
         pairs = p_pairs
         labels = p_labels
         combined = list(zip(pairs, labels))
-        random.shuffle(combined)
+        #random.shuffle(combined)
         pairs[:], labels[:] = zip(*combined)
 
         split_name_flip='train_flip'
@@ -955,16 +973,18 @@ def run_one_pair_rec(dataset_dir, out_dir, split_name):
         pairs = p_pairs
         labels = p_labels
         combined = list(zip(pairs, labels))
-        random.shuffle(combined)
+        #random.shuffle(combined)
         pairs[:], labels[:] = zip(*combined)
 
         ## Test will not use flip
         split_name_flip = None   
         pairs_flip = None
         labels_flip = None
-        _convert_dataset_one_pair_rec_withFlip(out_dir, split_name, split_name_flip, pairs, pairs_flip, labels, labels_flip, dataset_dir, attr_onehot_mat_path=attr_onehot_mat_path,
-            attr_w2v_dir=attr_w2v_dir, pose_peak_path=pose_peak_path, pose_sub_path=pose_sub_path, tf_record_pair_num=12800)
-
+        # _convert_dataset_one_pair_rec_withFlip(out_dir, split_name, split_name_flip, pairs, pairs_flip, labels, labels_flip, dataset_dir, attr_onehot_mat_path=attr_onehot_mat_path,
+        #     attr_w2v_dir=attr_w2v_dir, pose_peak_path=pose_peak_path, pose_sub_path=pose_sub_path, tf_record_pair_num=12800)
+        _convert_dataset_one_pair_rec_withFlip(out_dir, split_name, split_name_flip, pairs, pairs_flip, labels, labels_flip,
+                                               dataset_dir,pose_peak_path=pose_peak_path, pose_sub_path=pose_sub_path,
+                                               tf_record_pair_num=12800)
         print('\nTest convert Finished !')
 
     elif split_name.lower()=='test_samples':

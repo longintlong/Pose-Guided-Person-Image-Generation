@@ -183,13 +183,25 @@ scale_search = [0.5, 1, 1.5, 2]
 
 
 if __name__ == "__main__":
-    test_img_dir = "data/DF_img_pose/filted_up_test"
+    prefix = "data/Market1501_img_pose_attr_seg/Market-1501_PoseFiltered/"
+    pair_df = pd.read_csv(prefix + "market-pairs-test_0.csv")
+    source, target = pair_df['from'].tolist(), pair_df['to'].tolist()
+    # test_img_dir = "data/DF_img_pose/filted_up_test"
+    test_img_dir = "/mnt/data2/hhq/temp/market_data/test"
     all_peaks_dic, subsets_dic = {}, {}
     # samples = random.sample(os.listdir(test_img_dir), 50)
-    for img_path in os.listdir(test_img_dir):
-        img = cv2.imread(os.path.join(test_img_dir,img_path))
-        # img = img[:,40:216,:]
-        # img = cv2.resize(img,(176,256))
+    debug_lst = ["fasionWOMENGraphicTeesid0000436701_7additional.jpg","fasionWOMENGraphicTeesid0000436701_2side.jpg"]
+    pair_lst = []
+    error_lst = []
+    for i in range(len(source)):
+    # for img_path in (debug_lst):
+        sys.stdout.write('\r>> Converting image %d/%d ' % (i, len(source)))
+        sys.stdout.flush()
+        if [source[i], target[i]] in pair_lst:
+            print("the same",source[i],target[i])
+            continue
+        img = cv2.imread(os.path.join(test_img_dir,source[i]))
+        # img = cv2.imread(os.path.join(test_img_dir, img_path))
         multiplier = [x * boxsize / img.shape[0] for x in scale_search]
     
         heatmap_avg = np.zeros((img.shape[0], img.shape[1], 19))
@@ -213,16 +225,67 @@ if __name__ == "__main__":
         # canvas, to_plot, candidate, subset = decode_pose(
         #     img, param, heatmap_avg, paf_avg)
         # imsave(os.path.join("HPE/result/{}".format(video_name[:-4])+source_name), to_plot[:, :, ::-1])
-        all_peaks, subset = compute_cordinates(heatmap_avg, paf_avg,img)
-        all_peaks_dic[img_path] = all_peaks
-        subsets_dic[img_path] = subset
-        # print(img_path)
+        s_all_peaks, s_subset = compute_cordinates(heatmap_avg, paf_avg, img)
+        if s_all_peaks is [] or s_subset.size == 0:
+            print(source[i], target[i])
+            error_lst.append(i)
+            continue
 
-    result_dir = "data/DF_img_pose/PoseFiltered"
+        img = cv2.imread(os.path.join(test_img_dir, target[i]))
+        # img = img[:,40:216,:]
+        # img = cv2.resize(img,(176,256))
+        multiplier = [x * boxsize / img.shape[0] for x in scale_search]
+
+        heatmap_avg = np.zeros((img.shape[0], img.shape[1], 19))
+        paf_avg = np.zeros((img.shape[0], img.shape[1], 38))
+
+        for m in range(len(multiplier)):
+            scale = multiplier[m]
+
+            new_size = (np.array(img.shape[:2]) * scale).astype(np.int32)
+            imageToTest = resize(img, new_size, order=3, preserve_range=True)
+            imageToTest_padded = imageToTest[np.newaxis, :, :, :] / 255 - 0.5
+
+            output1, output2 = model.predict(imageToTest_padded)
+
+            heatmap = st.resize(output2[0], img.shape[:2], preserve_range=True, order=1)
+            paf = st.resize(output1[0], img.shape[:2], preserve_range=True, order=1)
+            heatmap_avg += heatmap
+            paf_avg += paf
+
+        heatmap_avg /= len(multiplier)
+        # canvas, to_plot, candidate, subset = decode_pose(
+        #     img, param, heatmap_avg, paf_avg)
+        # imsave(os.path.join("HPE/result/{}".format(video_name[:-4])+source_name), to_plot[:, :, ::-1])
+        t_all_peaks, t_subset = compute_cordinates(heatmap_avg, paf_avg, img)
+        if t_all_peaks is [] or t_subset.size == 0:
+            print(source[i], target[i])
+            error_lst.append(i)
+            continue
+
+        all_peaks_dic[source[i]] = s_all_peaks
+        subsets_dic[source[i]] = s_subset
+        all_peaks_dic[target[i]] = t_all_peaks
+        subsets_dic[target[i]] = t_subset
+        pair_lst.append([source[i], target[i]])
+
+
+    sys.stdout.write('\n')
+    sys.stdout.flush()
+    result_dir = prefix
     pose_peak_path = os.path.join(result_dir, "all_peaks_dic_DeepFashion.p")
     pose_sub_path = os.path.join(result_dir, "subsets_dic_DeepFashion.p")
+    pair_path = os.path.join(result_dir, "fashion-pairs-test.p")
+
     with open(pose_peak_path, 'wb') as f:
         pickle.dump(all_peaks_dic, f)
     with open(pose_sub_path, 'wb') as f:
         pickle.dump(subsets_dic, f)
+    print(len(pair_lst))
+    with open(pair_path,'wb') as f:
+        pickle.dump(pair_lst,f)
+    with open(os.path.join(result_dir, 'error_pair.txt'),'w') as f:
+        for i in error_lst:
+            f.writelines([source[i], ',', target[i], '\n'])
+
     print("finished")

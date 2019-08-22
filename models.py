@@ -120,7 +120,7 @@ def GeneratorCNN_Pose_UAEAfterResidual(x, pose_target, input_channel, z_num, rep
                 x = slim.conv2d(x, hidden_num * (idx + 2), 3, 2, activation_fn=activation_fn, data_format=data_format)
                 #x = tf.contrib.layers.max_pool2d(x, [2, 2], [2, 2], padding='VALID')
 
-        x = tf.reshape(x, [-1, np.prod([min_fea_map_H, min_fea_map_H/2, channel_num])])
+        x = tf.reshape(x, [-1, np.prod([min_fea_map_H, min_fea_map_H//2, channel_num])])
         z = x = slim.fully_connected(x, z_num, activation_fn=None)
         if noise_dim>0:
             noise = tf.random_uniform(
@@ -128,8 +128,8 @@ def GeneratorCNN_Pose_UAEAfterResidual(x, pose_target, input_channel, z_num, rep
             z = tf.concat([z, noise], 1)
 
         # Decoder
-        x = slim.fully_connected(z, np.prod([min_fea_map_H, min_fea_map_H/2, hidden_num]), activation_fn=None)
-        x = reshape(x, min_fea_map_H, min_fea_map_H/2, hidden_num, data_format)
+        x = slim.fully_connected(z, int(np.prod([min_fea_map_H, min_fea_map_H//2, hidden_num])), activation_fn=None)
+        x = reshape(x, min_fea_map_H, min_fea_map_H//2, hidden_num, data_format)
         
         for idx in range(repeat_num):
             # pdb.set_trace()
